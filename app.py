@@ -1,14 +1,24 @@
 from flask import Flask, request, jsonify
 from twilio.twiml.messaging_response import MessagingResponse
+from flask_cors import CORS
+
+
+
 
 app = Flask(__name__)
+CORS(app)  # Allow all origins
 
-@app.route('/', methods=['POST'])
-def webhook():
+@app.route('/bot', methods=['POST'])
+def bot():
     try:
-        # Get incoming message details
+        # Log headers for debugging
+        print("Headers:", request.headers)
+        print("Form Data:", request.form)
+
+        # Extract message and sender
         incoming_message = request.form.get('Body', '').lower()
-        sender = request.form.get('From')
+        sender = request.form.get('From', 'Unknown')
+        print(f"Incoming Message: {incoming_message}, Sender: {sender}")
 
         # Rule-based responses
         if 'hello' in incoming_message:
@@ -18,12 +28,13 @@ def webhook():
         else:
             response_text = "Sorry, I didn't understand that. Please type 'help' for options."
 
-        # Create a Twilio MessagingResponse
+        # Create Twilio response
         resp = MessagingResponse()
         resp.message(response_text)
 
         return str(resp)
     except Exception as e:
+        print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
